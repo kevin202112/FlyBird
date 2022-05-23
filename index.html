@@ -28,7 +28,7 @@
             y : window.innerHeight/2,
             motionY : 0,
             fly: function(){
-                bird.motionY -= 300 + 100*Math.random()
+                bird.motionY -= 200 + 100*Math.random()
             }
         }
 
@@ -59,6 +59,10 @@
         setInterval(barrierController.createbarrier, 1000);  //每秒生成一個障礙物
 
         function main(){
+            while(isStart){
+
+            }
+
             let windowHeight = window.innerHeight;              //取得視窗長寬
             let windowWidth = window.innerWidth;
             canvas.width = windowWidth;                         //重整畫布(長寬)
