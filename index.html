@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鳥過障礙</title>
+    <script src="vue.js"></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <!-- <img id="img" src="picture.png" style="display: none;"> -->
+    <script>
+        //設定canvas
+        let img = document.getElementById("img")
+        let canvas = document.getElementById("canvas")
+        var ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        //宣告物件 常數
+        let score = 0;
+        const g = 250;
+        
+        const bird = {  //鳥物件
+            isCollide: false,
+            radius:50,
+            x : 0,
+            y : window.innerHeight/2,
+            motionY : 0,
+            fly: function(){
+                bird.motionY -= 300 + 100*Math.random()
+            }
+        }
+
+        barrierController = {                               //障礙物管理物件
+            barrierNum: 0,                                  //障礙物數量
+            list: {},                                       //障礙物列表
+            createbarrier: function(){                      //障礙物生成函式
+                barrierController.barrierNum  ++;
+                const barrier = {
+                    id: Math.random(),                                  //亂數生成id             //一次生成上下兩個障礙物
+                    width:100,                                          //寬100                 //通道高用random通道中心用波函數+亂數
+
+                    height:200 + 300 * Math.random() - 100*Math.random(),                       //亂數生成通道高
+                    x: window.innerWidth,                                                       //初始位置 畫面最右邊    //通道中心位置
+                    y: window.innerHeight/2 + (window.innerHeight/3)*Math.sin((Date.now() % 100000) / 1000) +
+                       window.innerHeight/10 * Math.random(),
+                    motionX : -5,                                                               //往左速度
+                }
+                // if(Math.random() > 0.5){
+                //     barrier.y = window.innerHeight - barrier.height;  //一半生成在下面
+                // }else{ 
+                //     barrier.y = 0;  //一半生成在上面
+                // }
+                barrierController.list[barrier.id] = barrier  //加到list中
+            },
+        }
+
+        setInterval(barrierController.createbarrier, 1000);  //每秒生成一個障礙物
+
+        function main(){
+            let windowHeight = window.innerHeight;              //取得視窗長寬
+            let windowWidth = window.innerWidth;
+            canvas.width = windowWidth;                         //重整畫布(長寬)
+            canvas.height = windowHeight;
+
+            //寫出分數
+            ctx.font = "20pt Arial";
+            ctx.fillText(score, 10, 50);
+            
+            //鳥的運動
+            bird.y += bird.motionY/(1000/15);                           //速度
+            bird.motionY += g/(1000/15);                                //加速度
+            ctx.arc(windowWidth/2, bird.y, bird.radius, 0, 2*Math.PI);  //劃出鳥
+            ctx.fill()
+
+            //障礙物處理
+            for(let [id,barrier] of Object.entries(barrierController.list)){
+                if(barrier.x < -100){                                                   //如果離開畫面，消除
+                    delete barrierController.list[id];
+                    score ++;
+                    continue;
+                }
+                //if(barrier.x + barrier.width < windowWidth - 50){score ++;} //計算分數
+
+                barrier.x += barrier.motionX;                                                       //速度
+                //ctx.fillStyle = "#48FAEE";
+                ctx.fillRect(barrier.x,                            0, barrier.width , barrier.y - barrier.height);         //畫出上障礙物
+                ctx.fillRect(barrier.x, barrier.y + barrier.height/2, barrier.width , windowHeight - barrier.y - barrier.height/2);      //畫出下障礙物
+
+                //碰撞判斷
+                if(barrier.x + barrier.width > (windowWidth / 2) - 50 && barrier.x < (windowWidth / 2) + 50 ){ //如果障礙物在畫面中間100寬的話 V
+                    //做碰撞判斷 //障礙物左上角與鳥中心的距離<鳥的半徑
+                    // if(Math.sqrt(Math.pow(barrier.x                 - bird.x ,2)   + Math.pow(barrier.y - barrier.height - bird.y ,2)) < bird.radius ||    //上障礙左下角
+                    //    Math.sqrt(Math.pow(barrier.x                 - bird.x ,2)   + Math.pow(barrier.y + barrier.height - bird.y ,2)) < bird.radius ||    //下障礙左上角
+                    //    Math.sqrt(Math.pow(barrier.x + barrier.width - bird.x ,2)   + Math.pow(barrier.y + barrier.height - bird.y ,2)) < bird.radius ||    //下障礙右上角
+                    //    Math.sqrt(Math.pow(barrier.x + barrier.width - bird.x ,2)   + Math.pow(barrier.y - barrier.height - bird.y ,2)) < bird.radius ){    //上障礙右下角
+                    //     bird.isCollide = true;
+                    //     console.log('collide');
+                    // }
+                    if(bird.y - 50 < barrier.y - barrier.height || bird.y + 50 > barrier.y + barrier.height/2){
+                        bird.isCollide = true;
+                        console.log("collide");
+                    }
+                }
+                if(bird.y > windowHeight + 100 || bird.y < - 100){  //鳥超出畫面的話
+                    bird.isCollide = true;
+                    console.log('collide');
+                }
+                if(bird.isCollide){
+                    clearInterval(clock);
+                }
+            }
+        }
+
+        var clock = setInterval(main, 10);  //每10ms執行main一次
+        document.onmousedown = bird.fly  //按滑鼠，鳥就飛
+        
+    </script>
+</body>
+</html>
